@@ -124,21 +124,21 @@ function saveWarehouse() {
 function updateWarehouseUI() {
     const warehouseList = document.getElementById('warehouseList');
     const warehouseCount = document.getElementById('warehouseCount');
-    
+
     warehouseCount.textContent = warehouse.length;
-    
+
     if (warehouse.length === 0) {
         warehouseList.innerHTML = `<p class="empty-message">${t('emptyWarehouse')}</p>`;
         return;
     }
-    
+
     // Ordenar alfabéticamente
     const sortedWarehouse = [...warehouse].sort();
-    
+
     warehouseList.innerHTML = sortedWarehouse.map(resource => {
         const resourceElement = document.querySelector(`.resource[data-resource="${resource}"]`);
         const iconSrc = resourceElement ? resourceElement.querySelector('.resource-icon').src : '';
-        
+
         return `
             <div class="warehouse-item" data-resource="${resource}">
                 <div class="warehouse-item-content">
@@ -181,13 +181,13 @@ function toggleWarehouse(resourceName) {
 // Actualizar colores de recursos
 function updateResourceColors() {
     const allResources = document.querySelectorAll('.resource[data-resource]');
-    
+
     allResources.forEach(resource => {
         const resourceName = resource.getAttribute('data-resource');
-        
+
         // Quitar clases previas
         resource.classList.remove('in-warehouse', 'not-in-warehouse');
-        
+
         // Añadir clase según estado
         if (warehouse.includes(resourceName)) {
             resource.classList.add('in-warehouse');
@@ -246,10 +246,10 @@ exportWarehouse.addEventListener('click', () => {
 
 // Búsqueda en warehouse
 const warehouseSearch = document.getElementById('warehouseSearch');
-warehouseSearch.addEventListener('input', function() {
+warehouseSearch.addEventListener('input', function () {
     const searchTerm = this.value.toLowerCase();
     const items = document.querySelectorAll('.warehouse-item');
-    
+
     items.forEach(item => {
         const text = item.textContent.toLowerCase();
         item.style.display = text.includes(searchTerm) ? '' : 'none';
@@ -257,24 +257,175 @@ warehouseSearch.addEventListener('input', function() {
 });
 
 // ========================================
-// BÚSQUEDA EN MAPA (mejorada: filtra recursos dentro de cada isla)
+// NORMALIZACIÓN + ALIASES ES/EN PARA BÚSQUEDA
+// ========================================
+
+/**
+ * Normaliza para búsqueda:
+ * - minúsculas
+ * - quita tildes/diacríticos (áéíóúüñ -> aeiouun)
+ * - elimina puntuación y dobles espacios
+ */
+function normalizeText(s) {
+    return (s || '')
+        .toString()
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')                 // separa letra + diacrítico
+        .replace(/[\u0300-\u036f]/g, '')  // elimina diacríticos
+        .replace(/[^a-z0-9\s]/g, ' ')     // reemplaza puntuación por espacios
+        .replace(/\s+/g, ' ')             // colapsa espacios
+        .trim();
+}
+
+/**
+ * Aliases ES -> nombre canónico (tal como está en data-resource).
+ * Esto NO puede ser "todos" automáticamente si no defines las traducciones,
+ * pero aquí tienes una base grande que puedes ampliar.
+ *
+ * CLAVE: en español (sin importar tildes; se normaliza)
+ * VALOR: recurso canónico (lo de data-resource)
+ */
+const resourceAliases = (() => {
+    const map = {
+        // Metales y minerales
+        "cobre": "Copper",
+        "hierro": "Iron",
+        "estaño": "Tin",
+        "azufre": "Sulfur",
+        "plata": "Silver",
+        "iridio": "Iridium",
+        "rubí": "Ruby",
+        "rubi": "Ruby",
+        "esmeralda": "Emerald",
+        "amatista": "Amethyst",
+        "calcedonia": "Chalcedony",
+        "granito": "Granite",
+        "marmol": "Marble",
+        "mármol": "Marble",
+        "pizarra": "Slate",
+        "piedra caliza": "Limestone",
+        "caliza": "Limestone",
+        "arenisca": "Sandstone",
+        "basalto": "Basalt",
+
+        // Gemas / nombres propios (a veces se usan igual)
+        "herkimer": "Herkimer",
+        "radiolarita": "Radiolarite",
+
+        // Maderas
+        "madera vieja": "Agedwood",
+        "madera envejecida": "Agedwood",
+        "madera fuerte": "Strongwood",
+        "madera resistente": "Strongwood",
+        "madera ligera": "Lightwood",
+        "madera humeda": "Wetwood",
+        "madera húmeda": "Wetwood",
+        "madera mojada": "Wetwood",
+        "madera oscura": "Darkwood",
+        "madera blanda": "Softwood",
+        "ramas": "Twigs",
+
+        // Fibras / plantas
+        "yute": "Jute",
+        "algodon": "Cotton",
+        "algodón": "Cotton",
+        "caña de azucar": "Sugar Cane",
+        "cana de azucar": "Sugar Cane",
+        "paja": "Straw",
+        "junco": "Reeds",
+        "juncos": "Reeds",
+        "raices": "Roots",
+        "raíces": "Roots",
+        "frondas": "Fronds",
+        "bambu": "Bamboo",
+        "bambú": "Bamboo",
+        "cáñamo": "Hemp",
+        "canamo": "Hemp",
+
+        // Animales (si los usas en ES)
+        "hueso": "Bone",
+        "piel": "Skin",
+        "cuero": "Leather",
+        "pelaje": "Fur",
+        "lana": "Fleece",
+        "caparazon": "Carapace",
+        "caparazón": "Carapace",
+        "escama": "Scale",
+        "concha": "Shell",
+
+        // Comida / consumibles
+        "miel": "Honey",
+        "oregano": "Oregano",
+        "orégano": "Oregano",
+        "jarabe": "Syrup",
+        "arroz": "Rice",
+        "maiz": "Maize",
+        "maíz": "Maize",
+        "patata": "Potato",
+        "papa": "Potato",
+        "zanahoria": "Wild Carrot",
+        "zanahoria silvestre": "Wild Carrot",
+        "tomillo": "Thyme",
+        "fresa": "Strawberry",
+
+        // Otros (si aparecen)
+        "yodo": "Iodine",
+        "algas": "Seaweed",
+        "savia": "Sap",
+        "corteza": "Bark",
+        "coral de fuego": "Fire Coral",
+
+        // Aceites
+        "petroleo crudo": "Crude Oil",
+        "petróleo crudo": "Crude Oil",
+        "aceite mineral": "Mineral Oil",
+        "crudo": "Crude Oil",
+
+        // Chert / Chert suele traducirse como sílex/pedernal (según contexto)
+        "pedernal": "Chert",
+        "silex": "Chert",
+        "sílex": "Chert",
+
+        // Lignite
+        "lignito": "Lignite",
+    };
+
+    // Normalizamos las claves al construir el mapa para que "Á" y "A" sean iguales
+    const normalized = {};
+    Object.keys(map).forEach(k => {
+        normalized[normalizeText(k)] = map[k];
+    });
+    return normalized;
+})();
+
+function getSearchVariants(termRaw) {
+    const termNorm = normalizeText(termRaw);
+    if (!termNorm) return [];
+
+    const variants = new Set([termNorm]);
+
+    // Si hay alias ES -> canónico EN, añadimos también el canónico como variante
+    const aliasTo = resourceAliases[termNorm];
+    if (aliasTo) {
+        variants.add(normalizeText(aliasTo));
+    }
+
+    return Array.from(variants);
+}
+
+// ========================================
+// BÚSQUEDA EN MAPA (filtra recursos dentro de cada isla, reconoce ES)
 // ========================================
 
 const searchBox = document.getElementById('searchBox');
 const locationCards = document.querySelectorAll('.location-card');
 
-function normalizeText(s) {
-    return (s || '')
-        .toString()
-        .trim()
-        .toLowerCase();
-}
-
 function applyMapSearchFilter(termRaw) {
-    const term = normalizeText(termRaw);
+    const variants = getSearchVariants(termRaw);
 
     // Si no hay búsqueda: restaurar todo
-    if (!term) {
+    if (variants.length === 0) {
         locationCards.forEach(card => {
             card.style.display = '';
             card.querySelectorAll('.resource').forEach(r => r.classList.remove('hidden'));
@@ -288,20 +439,19 @@ function applyMapSearchFilter(termRaw) {
 
         const resources = Array.from(card.querySelectorAll('.resource'));
         const matchingResources = resources.filter(r => {
-            const resourceName = normalizeText(r.getAttribute('data-resource') || r.textContent);
-            return resourceName.includes(term);
+            const resourceAttr = normalizeText(r.getAttribute('data-resource'));
+            const resourceText = normalizeText(r.textContent);
+            return variants.some(v => resourceAttr.includes(v) || resourceText.includes(v));
         });
 
-        // Si el término coincide con el nombre de la ubicación:
-        // mostramos la tarjeta y todos sus recursos (modo "buscar isla")
-        if (locationName.includes(term)) {
+        // Si el término coincide con la ubicación: mostramos la tarjeta y todos los recursos
+        if (variants.some(v => locationName.includes(v))) {
             card.style.display = '';
             resources.forEach(r => r.classList.remove('hidden'));
             return;
         }
 
-        // Si hay recursos que coinciden:
-        // mostramos la tarjeta y SOLO esos recursos (modo "buscar material")
+        // Si coincide con recursos: mostramos la tarjeta y SOLO esos recursos
         if (matchingResources.length > 0) {
             card.style.display = '';
             resources.forEach(r => r.classList.add('hidden'));
@@ -309,12 +459,12 @@ function applyMapSearchFilter(termRaw) {
             return;
         }
 
-        // No coincide ni ubicación ni recurso: ocultar tarjeta
+        // No coincide: ocultar tarjeta
         card.style.display = 'none';
     });
 }
 
-searchBox.addEventListener('input', function() {
+searchBox.addEventListener('input', function () {
     applyMapSearchFilter(this.value);
 });
 
@@ -326,18 +476,18 @@ const filterBtns = document.querySelectorAll('.filter-btn');
 const allResources = document.querySelectorAll('.resource');
 
 filterBtns.forEach(btn => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function () {
         // Remover active de todos
         filterBtns.forEach(b => b.classList.remove('active'));
         // Añadir active al clickeado
         this.classList.add('active');
-        
+
         const filter = this.getAttribute('data-filter');
-        
+
         // Mostrar/ocultar recursos
         allResources.forEach(resource => {
             const resourceName = resource.getAttribute('data-resource');
-            
+
             if (filter === 'all') {
                 resource.classList.remove('hidden');
             } else if (filter === 'important') {
@@ -366,7 +516,7 @@ filterBtns.forEach(btn => {
                 }
             }
         });
-        
+
         // Ocultar tarjetas sin recursos visibles
         locationCards.forEach(card => {
             const visibleResources = card.querySelectorAll('.resource:not(.hidden)');
@@ -384,7 +534,7 @@ filterBtns.forEach(btn => {
 // ========================================
 
 allResources.forEach(resource => {
-    resource.addEventListener('click', function() {
+    resource.addEventListener('click', function () {
         const resourceName = this.getAttribute('data-resource');
         toggleWarehouse(resourceName);
     });
@@ -409,16 +559,16 @@ console.log(t('consoleResourcesTotal', allResources.length));
 console.log(t('consoleWarehouseCount', warehouse.length));
 
 // Detectar iconos que no cargan
-window.addEventListener('load', function() {
+window.addEventListener('load', function () {
     const icons = document.querySelectorAll('.resource-icon');
     const missing = [];
-    
+
     icons.forEach(img => {
         if (!img.complete || img.naturalHeight === 0) {
             missing.push(img.src.split('/').pop());
         }
     });
-    
+
     if (missing.length > 0) {
         console.warn(t('iconsMissing'));
         console.table([...new Set(missing)].sort());
