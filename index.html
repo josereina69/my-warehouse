@@ -10,37 +10,43 @@
 <body>
 
 <header>
-    <h1><i class="fas fa-map-marked-alt"></i> Blackwood Resource Map</h1>
-    <p>Guía interactiva de materiales y ubicaciones</p>
+    <h1><i class="fas fa-map-marked-alt"></i> <span data-i18n="appTitle">Blackwood Resource Map</span></h1>
+    <p data-i18n="appSubtitle">Guía interactiva de materiales y ubicaciones</p>
+
+    <!-- Selector de idioma -->
+    <div class="lang-switcher">
+        <button type="button" class="lang-btn" data-lang="es">ES</button>
+        <button type="button" class="lang-btn" data-lang="en">EN</button>
+    </div>
 </header>
 
 <!-- Botón para abrir Warehouse -->
 <button id="warehouseToggle" class="warehouse-toggle-btn">
-    <i class="fas fa-warehouse"></i> WAREHOUSE (<span id="warehouseCount">0</span>)
+    <i class="fas fa-warehouse"></i> <span data-i18n="myWarehouseButton">WAREHOUSE</span> (<span id="warehouseCount">0</span>)
 </button>
 
 <!-- Panel Warehouse -->
 <div id="warehousePanel" class="warehouse-panel">
     <div class="warehouse-header">
-        <h2><i class="fas fa-warehouse"></i> Mi Warehouse</h2>
-        <button id="closeWarehouse" class="close-btn"><i class="fas fa-times"></i></button>
+        <h2><i class="fas fa-warehouse"></i> <span data-i18n="myWarehouseTitle">Warehouse</span></h2>
+        <button id="closeWarehouse" class="close-btn" aria-label="Close"><i class="fas fa-times"></i></button>
     </div>
     
     <div class="warehouse-actions">
         <button id="clearWarehouse" class="action-btn danger">
-            <i class="fas fa-trash"></i> Vaciar Todo
+            <i class="fas fa-trash"></i> <span data-i18n="clearAll">Vaciar Todo</span>
         </button>
         <button id="exportWarehouse" class="action-btn">
-            <i class="fas fa-download"></i> Exportar
+            <i class="fas fa-download"></i> <span data-i18n="export">Exportar</span>
         </button>
     </div>
 
     <div class="warehouse-search">
-        <input type="text" id="warehouseSearch" placeholder="🔍 Buscar en almacén...">
+        <input type="text" id="warehouseSearch" data-i18n-placeholder="warehouseSearch" placeholder="🔍 Buscar en almacén...">
     </div>
 
     <div id="warehouseList" class="warehouse-list">
-        <p class="empty-message">Tu almacén está vacío.  Haz click en los recursos de las ubicaciones para añadirlos.</p>
+        <p class="empty-message" data-i18n="emptyWarehouse">Tu almacén está vacío.  Haz click en los recursos de las ubicaciones para añadirlos.</p>
     </div>
 </div>
 
@@ -50,31 +56,31 @@
 <!-- Barra de búsqueda -->
 <div class="search-container">
     <i class="fas fa-search"></i>
-    <input type="text" id="searchBox" placeholder="🔍 Buscar recurso o ubicación...">
+    <input type="text" id="searchBox" data-i18n-placeholder="mapSearch" placeholder="🔍 Buscar recurso o ubicación...">
 </div>
 
 <!-- Filtros -->
 <div class="filter-container">
     <button class="filter-btn active" data-filter="all">
-        <i class="fas fa-globe"></i> Todos
+        <i class="fas fa-globe"></i> <span data-i18n="filterAll">Todos</span>
     </button>
     <button class="filter-btn" data-filter="important">
-        <i class="fas fa-star"></i> Raros
+        <i class="fas fa-star"></i> <span data-i18n="filterRare">Raros</span>
     </button>
     <button class="filter-btn" data-filter="consumable">
-        <i class="fas fa-apple-alt"></i> Consumibles
+        <i class="fas fa-apple-alt"></i> <span data-i18n="filterConsumables">Consumibles</span>
     </button>
     <button class="filter-btn" data-filter="missing">
-        <i class="fas fa-exclamation-circle"></i> Faltantes
+        <i class="fas fa-exclamation-circle"></i> <span data-i18n="filterMissing">Faltantes</span>
     </button>
     <button class="filter-btn" data-filter="owned">
-        <i class="fas fa-check-circle"></i> En Almacén
+        <i class="fas fa-check-circle"></i> <span data-i18n="filterOwned">En Almacén</span>
     </button>
 </div>
 
 <!-- Mapa -->
 <div class="map-section">
-    <h2><i class="fas fa-map"></i> Mapa de Blackwood</h2>
+    <h2><i class="fas fa-map"></i> <span data-i18n="mapTitle">Mapa de Blackwood</span></h2>
     <div class="map-container">
         <img src="blackwood_map.png" alt="Mapa de Blackwood" class="map-image">
     </div>
@@ -348,7 +354,7 @@
 </div>
 
 <footer>
-    <p>❤️ Atlas Blackwood Companion | Hecho para tu Compañía</p>
+    <p data-i18n="footerText">❤️ Atlas Blackwood Companion | Hecho para tu Compañía</p>
 </footer>
 
 <script src="script.js"></script>

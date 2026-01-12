@@ -1,4 +1,113 @@
 // ========================================
+// i18n (ES/EN)
+// ========================================
+
+const i18n = {
+    es: {
+        appTitle: 'Blackwood Resource Map',
+        appSubtitle: 'Guía interactiva de materiales y ubicaciones',
+        myWarehouseButton: 'WAREHOUSE',
+        myWarehouseTitle: 'WAREHOUSE',
+        clearAll: 'Vaciar Todo',
+        export: 'Exportar',
+        warehouseSearch: '🔍 Buscar en almacén...',
+        emptyWarehouse: 'Tu almacén está vacío.  Haz click en los recursos de las ubicaciones para añadirlos.',
+        mapSearch: '🔍 Buscar recurso o ubicación...',
+        mapTitle: 'Mapa de Blackwood',
+        filterAll: 'Todos',
+        filterRare: 'Raros',
+        filterConsumables: 'Consumibles',
+        filterMissing: 'Faltantes',
+        filterOwned: 'En Almacén',
+        confirmClear: '¿Estás seguro de que quieres vaciar todo el almacén?',
+        consoleTitle: '✅ Atlas Blackwood Resource Map',
+        consoleLocationsLoaded: (n) => `📍 ${n} ubicaciones cargadas`,
+        consoleResourcesTotal: (n) => `📦 ${n} recursos totales`,
+        consoleWarehouseCount: (n) => `🏪 ${n} recursos en almacén`,
+        consoleAdded: (name) => `✅ ${name} añadido al almacén`,
+        consoleRemoved: (name) => `❌ ${name} eliminado del almacén`,
+        consoleCleared: '🗑️ Almacén vaciado',
+        consoleExported: '📥 Warehouse exportado',
+        iconsMissing: '⚠️ Iconos que no cargaron: ',
+        iconsOk: '✅ Todos los iconos cargaron correctamente'
+    },
+    en: {
+        appTitle: 'Blackwood Resource Map',
+        appSubtitle: 'Interactive guide to materials and locations',
+        myWarehouseButton: 'WAREHOUSE',
+        myWarehouseTitle: 'WAREHOUSE',
+        clearAll: 'Clear All',
+        export: 'Export',
+        warehouseSearch: '🔍 Search in warehouse...',
+        emptyWarehouse: 'Your warehouse is empty. Click resources in locations to add them.',
+        mapSearch: '🔍 Search resource or location...',
+        mapTitle: 'Blackwood Map',
+        filterAll: 'All',
+        filterRare: 'Rare',
+        filterConsumables: 'Consumables',
+        filterMissing: 'Missing',
+        filterOwned: 'In Warehouse',
+        confirmClear: 'Are you sure you want to clear the entire warehouse?',
+        consoleTitle: '✅ Atlas Blackwood Resource Map',
+        consoleLocationsLoaded: (n) => `📍 ${n} locations loaded`,
+        consoleResourcesTotal: (n) => `📦 ${n} total resources`,
+        consoleWarehouseCount: (n) => `🏪 ${n} resources in warehouse`,
+        consoleAdded: (name) => `✅ ${name} added to warehouse`,
+        consoleRemoved: (name) => `❌ ${name} removed from warehouse`,
+        consoleCleared: '🗑️ Warehouse cleared',
+        consoleExported: '📥 Warehouse exported',
+        iconsMissing: '⚠️ Icons that failed to load: ',
+        iconsOk: '✅ All icons loaded correctly'
+    }
+};
+
+function getLang() {
+    return localStorage.getItem('atlasLang') || 'es';
+}
+
+function setLang(lang) {
+    localStorage.setItem('atlasLang', lang);
+    applyI18n();
+}
+
+function t(key, ...args) {
+    const lang = getLang();
+    const val = i18n[lang]?.[key] ?? i18n.es[key] ?? key;
+    return typeof val === 'function' ? val(...args) : val;
+}
+
+function applyI18n() {
+    // Text nodes
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = t(key);
+    });
+
+    // Placeholders
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        el.setAttribute('placeholder', t(key));
+    });
+
+    // Botones ES/EN active
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        const isActive = btn.getAttribute('data-lang') === getLang();
+        btn.classList.toggle('active', isActive);
+    });
+
+    // Re-render UI que depende de strings (mensaje empty)
+    updateWarehouseUI();
+}
+
+// Bind idioma
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => setLang(btn.getAttribute('data-lang')));
+    });
+    applyI18n();
+});
+
+// ========================================
 // WAREHOUSE SYSTEM
 // ========================================
 
@@ -19,16 +128,16 @@ function updateWarehouseUI() {
     warehouseCount.textContent = warehouse.length;
     
     if (warehouse.length === 0) {
-        warehouseList. innerHTML = '<p class="empty-message">Tu almacén está vacío.  Haz click en los recursos de las ubicaciones para añadirlos.</p>';
+        warehouseList.innerHTML = `<p class="empty-message">${t('emptyWarehouse')}</p>`;
         return;
     }
     
     // Ordenar alfabéticamente
-    const sortedWarehouse = [...warehouse]. sort();
+    const sortedWarehouse = [...warehouse].sort();
     
-    warehouseList.innerHTML = sortedWarehouse. map(resource => {
+    warehouseList.innerHTML = sortedWarehouse.map(resource => {
         const resourceElement = document.querySelector(`.resource[data-resource="${resource}"]`);
-        const iconSrc = resourceElement ?  resourceElement.querySelector('.resource-icon').src : '';
+        const iconSrc = resourceElement ? resourceElement.querySelector('.resource-icon').src : '';
         
         return `
             <div class="warehouse-item" data-resource="${resource}">
@@ -46,10 +155,10 @@ function updateWarehouseUI() {
 
 // Añadir al warehouse
 function addToWarehouse(resourceName) {
-    if (! warehouse.includes(resourceName)) {
+    if (!warehouse.includes(resourceName)) {
         warehouse.push(resourceName);
         saveWarehouse();
-        console.log(`✅ ${resourceName} añadido al almacén`);
+        console.log(t('consoleAdded', resourceName));
     }
 }
 
@@ -57,7 +166,7 @@ function addToWarehouse(resourceName) {
 function removeFromWarehouse(resourceName) {
     warehouse = warehouse.filter(r => r !== resourceName);
     saveWarehouse();
-    console.log(`❌ ${resourceName} eliminado del almacén`);
+    console.log(t('consoleRemoved', resourceName));
 }
 
 // Toggle recurso en warehouse
@@ -81,7 +190,7 @@ function updateResourceColors() {
         
         // Añadir clase según estado
         if (warehouse.includes(resourceName)) {
-            resource. classList.add('in-warehouse');
+            resource.classList.add('in-warehouse');
         } else {
             resource.classList.add('not-in-warehouse');
         }
@@ -93,7 +202,7 @@ function updateResourceColors() {
 // ========================================
 
 const warehouseToggle = document.getElementById('warehouseToggle');
-const warehousePanel = document. getElementById('warehousePanel');
+const warehousePanel = document.getElementById('warehousePanel');
 const closeWarehouse = document.getElementById('closeWarehouse');
 const overlay = document.getElementById('overlay');
 const clearWarehouse = document.getElementById('clearWarehouse');
@@ -116,38 +225,34 @@ overlay.addEventListener('click', () => {
 
 // Vaciar warehouse
 clearWarehouse.addEventListener('click', () => {
-    if (confirm('¿Estás seguro de que quieres vaciar todo el almacén?')) {
+    if (confirm(t('confirmClear'))) {
         warehouse = [];
         saveWarehouse();
-        console.log('🗑️ Almacén vaciado');
+        console.log(t('consoleCleared'));
     }
 });
 
 // Exportar warehouse
 exportWarehouse.addEventListener('click', () => {
     const data = JSON.stringify(warehouse, null, 2);
-    const blob = new Blob([data], { type:  'application/json' });
+    const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = 'atlas-warehouse.json';
     a.click();
-    console.log('📥 Warehouse exportado');
+    console.log(t('consoleExported'));
 });
 
 // Búsqueda en warehouse
 const warehouseSearch = document.getElementById('warehouseSearch');
 warehouseSearch.addEventListener('input', function() {
     const searchTerm = this.value.toLowerCase();
-    const items = document.querySelectorAll('. warehouse-item');
+    const items = document.querySelectorAll('.warehouse-item');
     
     items.forEach(item => {
         const text = item.textContent.toLowerCase();
-        if (text.includes(searchTerm)) {
-            item.style.display = '';
-        } else {
-            item.style.display = 'none';
-        }
+        item.style.display = text.includes(searchTerm) ? '' : 'none';
     });
 });
 
@@ -162,12 +267,8 @@ searchBox.addEventListener('input', function() {
     const searchTerm = this.value.toLowerCase();
     
     locationCards.forEach(card => {
-        const text = card. textContent.toLowerCase();
-        if (text.includes(searchTerm)) {
-            card.style. display = '';
-        } else {
-            card.style.display = 'none';
-        }
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(searchTerm) ? '' : 'none';
     });
 });
 
@@ -206,13 +307,13 @@ filterBtns.forEach(btn => {
                     resource.classList.add('hidden');
                 }
             } else if (filter === 'missing') {
-                if (! warehouse.includes(resourceName)) {
+                if (!warehouse.includes(resourceName)) {
                     resource.classList.remove('hidden');
                 } else {
                     resource.classList.add('hidden');
                 }
             } else if (filter === 'owned') {
-                if (warehouse. includes(resourceName)) {
+                if (warehouse.includes(resourceName)) {
                     resource.classList.remove('hidden');
                 } else {
                     resource.classList.add('hidden');
@@ -224,9 +325,9 @@ filterBtns.forEach(btn => {
         locationCards.forEach(card => {
             const visibleResources = card.querySelectorAll('.resource:not(.hidden)');
             if (visibleResources.length === 0) {
-                card. style.display = 'none';
+                card.style.display = 'none';
             } else {
-                card.style. display = '';
+                card.style.display = '';
             }
         });
     });
@@ -256,26 +357,26 @@ document.addEventListener('DOMContentLoaded', () => {
 // CONSOLA
 // ========================================
 
-console.log('%c✅ Atlas Blackwood Resource Map', 'color: #f39c12; font-size: 20px; font-weight: bold;');
-console.log(`📍 ${locationCards.length} ubicaciones cargadas`);
-console.log(`📦 ${allResources.length} recursos totales`);
-console.log(`🏪 ${warehouse.length} recursos en almacén`);
+console.log(`%c${t('consoleTitle')}`, 'color: #f39c12; font-size: 20px; font-weight: bold;');
+console.log(t('consoleLocationsLoaded', locationCards.length));
+console.log(t('consoleResourcesTotal', allResources.length));
+console.log(t('consoleWarehouseCount', warehouse.length));
 
 // Detectar iconos que no cargan
 window.addEventListener('load', function() {
-    const icons = document.querySelectorAll('. resource-icon');
+    const icons = document.querySelectorAll('.resource-icon');
     const missing = [];
     
     icons.forEach(img => {
         if (!img.complete || img.naturalHeight === 0) {
-            missing.push(img.src. split('/').pop());
+            missing.push(img.src.split('/').pop());
         }
     });
     
     if (missing.length > 0) {
-        console.warn('⚠️ Iconos que no cargaron: ');
+        console.warn(t('iconsMissing'));
         console.table([...new Set(missing)].sort());
     } else {
-        console.log('✅ Todos los iconos cargaron correctamente');
+        console.log(t('iconsOk'));
     }
 });
