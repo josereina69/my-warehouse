@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlas Blackwood - Guía de Recursos</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<header>
+    <h1><i class="fas fa-map-marked-alt"></i> Blackwood Resource Map</h1>
+    <p>Guía interactiva de materiales y ubicaciones</p>
+</header>
+
+<!-- Botón para abrir Warehouse -->
+<button id="warehouseToggle" class="warehouse-toggle-btn">
+    <i class="fas fa-warehouse"></i> Mi Almacén (<span id="warehouseCount">0</span>)
+</button>
+
+<!-- Panel Warehouse -->
+<div id="warehousePanel" class="warehouse-panel">
+    <div class="warehouse-header">
+        <h2><i class="fas fa-warehouse"></i> Mi Warehouse</h2>
+        <button id="closeWarehouse" class="close-btn"><i class="fas fa-times"></i></button>
+    </div>
+    
+    <div class="warehouse-actions">
+        <button id="clearWarehouse" class="action-btn danger">
+            <i class="fas fa-trash"></i> Vaciar Todo
+        </button>
+        <button id="exportWarehouse" class="action-btn">
+            <i class="fas fa-download"></i> Exportar
+        </button>
+    </div>
+
+    <div class="warehouse-search">
+        <input type="text" id="warehouseSearch" placeholder="🔍 Buscar en almacén... ">
+    </div>
+
+    <div id="warehouseList" class="warehouse-list">
+        <p class="empty-message">Tu almacén está vacío.  Haz click en los recursos de las ubicaciones para añadirlos.</p>
+    </div>
+</div>
+
+<!-- Overlay -->
+<div id="overlay" class="overlay"></div>
+
+<!-- Barra de búsqueda -->
+<div class="search-container">
+    <i class="fas fa-search"></i>
+    <input type="text" id="searchBox" placeholder="🔍 Buscar recurso o ubicación...">
+</div>
+
+<!-- Filtros -->
+<div class="filter-container">
+    <button class="filter-btn active" data-filter="all">
+        <i class="fas fa-globe"></i> Todos
+    </button>
+    <button class="filter-btn" data-filter="important">
+        <i class="fas fa-star"></i> Raros
+    </button>
+    <button class="filter-btn" data-filter="consumable">
+        <i class="fas fa-apple-alt"></i> Consumibles
+    </button>
+    <button class="filter-btn" data-filter="missing">
+        <i class="fas fa-exclamation-circle"></i> Faltantes
+    </button>
+    <button class="filter-btn" data-filter="owned">
+        <i class="fas fa-check-circle"></i> En Almacén
+    </button>
+</div>
+
+<!-- Mapa -->
+<div class="map-section">
+    <h2><i class="fas fa-map"></i> Mapa de Blackwood</h2>
+    <div class="map-container">
+        <img src="blackwood_map.png" alt="Mapa de Blackwood" class="map-image">
+    </div>
+</div>
+
+<!-- Grid de ubicaciones -->
+<div class="locations-grid">
+
+    <!-- FREEPORT -->
+    <div class="location-card">
+        <div class="location-header">
+            <h3><i class="fas fa-anchor"></i> Freeport</h3>
+            <span class="badge badge-equatorial">Equatorial</span>
+        </div>
+        <div class="resources">
+            <span class="resource" data-resource="Agedwood"><img src="icons/Agedwood. webp" class="resource-icon"> Agedwood</span>
+            <span class="resource" data-resource="Bark"><img src="icons/Wood. webp" class="resource-icon"> Bark</span>
+            <span class="resource" data-resource="Chalcedony"><img src="icons/Chalcedony.webp" class="resource-icon"> Chalcedony</span>
+            <span class="resource" data-resource="Copper"><img src="icons/Copper.webp" class="resource-icon"> Copper</span>
+            <span class="resource" data-resource="Fronds"><img src="icons/Fronds.webp" class="resource-icon"> Fronds</span>
+            <span class="resource" data-resource="Granite"><img src="icons/Granite.webp" class="resource-icon"> Granite</span>
+            <span class="resource" data-resource="Herkimer"><img src="icons/Herkimer.webp" class="resource-icon"> Herkimer</span>
+            <span class="resource consumable" data-resource="Honey"><img src="icons/Honey.webp" class="resource-icon"> Honey</span>
+            <span class="resource" data-resource="Iodine"><img src="icons/Kala_Namak.webp" class="resource-icon"> Iodine</span>
+            <span class="resource" data-resource="Iron"><img src="icons/Iron. webp" class="resource-icon"> Iron</span>
+            <span class="resource" data-resource="Jute"><img src="icons/Jute.webp" class="resource-icon"> Jute</span>
+            <span class="resource consumable" data-resource="Kala Namak"><img src="icons/Kala_Namak. webp" class="resource-icon"> Kala Namak</span>
+            <span class="resource" data-resource="Lightwood"><img src="icons/Lightwood.webp" class="resource-icon"> Lightwood</span>
+            <span class="resource" data-resource="Limestone"><img src="icons/Limestone.webp" class="resource-icon"> Limestone</span>
+            <span class="resource" data-resource="Marble"><img src="icons/Marble.webp" class="resource-icon"> Marble</span>
+            <span class="resource" data-resource="Radiolarite"><img src="icons/Radiolarite.webp" class="resource-icon"> Radiolarite</span>
+            <span class="resource" data-resource="Reeds"><img src="icons/Reeds.webp" class="resource-icon"> Reeds</span>
+            <span class="resource" data-resource="Roots"><img src="icons/Roots.webp" class="resource-icon"> Roots</span>
+            <span class="resource" data-resource="Seaweed"><img src="icons/Reeds.webp" class="resource-icon"> Seaweed</span>
+            <span class="resource" data-resource="Slate"><img src="icons/Slate.webp" class="resource-icon"> Slate</span>
+            <span class="resource" data-resource="Straw"><img src="icons/Straw. webp" class="resource-icon"> Straw</span>
+            <span class="resource" data-resource="Strongwood"><img src="icons/Strongwood. webp" class="resource-icon"> Strongwood</span>
+            <span class="resource consumable" data-resource="Sugar Cane"><img src="icons/Sugar_Cane.webp" class="resource-icon"> Sugar Cane</span>
+            <span class="resource" data-resource="Sulfur"><img src="icons/Sulfur.webp" class="resource-icon"> Sulfur</span>
+            <span class="resource" data-resource="Tin"><img src="icons/Tin.webp" class="resource-icon"> Tin</span>
+        </div>
+    </div>
+
+    <!-- GOLNORA REFUGE -->
+    <div class="location-card">
+        <div class="location-header">
+            <h3><i class="fas fa-person-booth"></i> Golnora Refuge (Sitting Man)</h3>
+            <span class="badge badge-desert">Desert</span>
+        </div>
+        <div class="resources">
+            <span class="resource important" data-resource="Ruby"><img src="icons/Ruby. webp" class="resource-icon"> Ruby ⭐</span>
+            <span class="resource" data-resource="Agedwood"><img src="icons/Agedwood.webp" class="resource-icon"> Agedwood</span>
+            <span class="resource" data-resource="Bark"><img src="icons/Wood.webp" class="resource-icon"> Bark</span>
+            <span class="resource" data-resource="Chalcedony"><img src="icons/Chalcedony.webp" class="resource-icon"> Chalcedony</span>
+            <span class="resource" data-resource="Chert"><img src="icons/Stone.webp" class="resource-icon"> Chert</span>
+            <span class="resource" data-resource="Cotton"><img src="icons/Cotton. webp" class="resource-icon"> Cotton</span>
+            <span class="resource" data-resource="Copper"><img src="icons/Copper.webp" class="resource-icon"> Copper</span>
+            <span class="resource" data-resource="Granite"><img src="icons/Granite.webp" class="resource-icon"> Granite</span>
+            <span class="resource" data-resource="Iron"><img src="icons/Iron. webp" class="resource-icon"> Iron</span>
+            <span class="resource" data-resource="Ironwood"><img src="icons/Ironwood.webp" class="resource-icon"> Ironwood</span>
+            <span class="resource" data-resource="Jute"><img src="icons/Jute.webp" class="resource-icon"> Jute</span>
+            <span class="resource" data-resource="Lignite"><img src="icons/Lignite.webp" class="resource-icon"> Lignite</span>
+            <span class="resource" data-resource="Limestone"><img src="icons/Limestone.webp" class="resource-icon"> Limestone</span>
+            <span class="resource" data-resource="Marble"><img src="icons/Marble.webp" class="resource-icon"> Marble</span>
+            <span class="resource" data-resource="Radiolarite"><img src="icons/Radiolarite.webp" class="resource-icon"> Radiolarite</span>
+            <span class="resource" data-resource="Reeds"><img src="icons/Reeds. webp" class="resource-icon"> Reeds</span>
+            <span class="resource" data-resource="Roots"><img src="icons/Roots.webp" class="resource-icon"> Roots</span>
+            <span class="resource" data-resource="Seaweed"><img src="icons/Reeds.webp" class="resource-icon"> Seaweed</span>
+            <span class="resource" data-resource="Straw"><img src="icons/Straw.webp" class="resource-icon"> Straw</span>
+            <span class="resource" data-resource="Strongwood"><img src="icons/Strongwood.webp" class="resource-icon"> Strongwood</span>
+            <span class="resource" data-resource="Tellurite"><img src="icons/Tellurite.webp" class="resource-icon"> Tellurite</span>
+            <span class="resource" data-resource="Tin"><img src="icons/Tin.webp" class="resource-icon"> Tin</span>
+            <span class="resource" data-resource="Wetwood"><img src="icons/Wood.webp" class="resource-icon"> Wetwood</span>
+        </div>
+    </div>
+
+    <!-- STAFCOOK GULLY -->
+    <div class="location-card">
+        <div class="location-header">
+            <h3><i class="fas fa-mountain"></i> Stafcook Gully</h3>
+            <span class="badge badge-normal">West Center</span>
+        </div>
+        <div class="resources">
+            <span class="resource consumable" data-resource="Honey"><img src="icons/Honey.webp" class="resource-icon"> Honey</span>
+            <span class="resource" data-resource="Agedwood"><img src="icons/Agedwood.webp" class="resource-icon"> Agedwood</span>
+            <span class="resource" data-resource="Bark"><img src="icons/Wood.webp" class="resource-icon"> Bark</span>
+            <span class="resource" data-resource="Bone"><img src="icons/Bone.webp" class="resource-icon"> Bone</span>
+            <span class="resource" data-resource="Carapace"><img src="icons/Carapace.webp" class="resource-icon"> Carapace</span>
+            <span class="resource" data-resource="Chalcedony"><img src="icons/Chalcedony.webp" class="resource-icon"> Chalcedony</span>
+            <span class="resource" data-resource="Chert"><img src="icons/Stone.webp" class="resource-icon"> Chert</span>
+            <span class="resource" data-resource="Copper"><img src="icons/Copper.webp" class="resource-icon"> Copper</span>
+            <span class="resource" data-resource="Fleece"><img src="icons/Fleece.webp" class="resource-icon"> Fleece</span>
+            <span class="resource" data-resource="Fronds"><img src="icons/Fronds.webp" class="resource-icon"> Fronds</span>
+            <span class="resource" data-resource="Fur"><img src="icons/Fur.webp" class="resource-icon"> Fur</span>
+            <span class="resource" data-resource="Granite"><img src="icons/Granite.webp" class="resource-icon"> Granite</span>
+            <span class="resource" data-resource="Herkimer"><img src="icons/Herkimer.webp" class="resource-icon"> Herkimer</span>
+            <span class="resource" data-resource="Iron"><img src="icons/Iron. webp" class="resource-icon"> Iron</span>
+            <span class="resource" data-resource="Jute"><img src="icons/Jute.webp" class="resource-icon"> Jute</span>
+            <span class="resource" data-resource="Leather"><img src="icons/Leather.webp" class="resource-icon"> Leather</span>
+            <span class="resource" data-resource="Limestone"><img src="icons/Limestone.webp" class="resource-icon"> Limestone</span>
+            <span class="resource" data-resource="Marble"><img src="icons/Marble.webp" class="resource-icon"> Marble</span>
+            <span class="resource" data-resource="Radiolarite"><img src="icons/Radiolarite.webp" class="resource-icon"> Radiolarite</span>
+            <span class="resource" data-resource="Roots"><img src="icons/Roots.webp" class="resource-icon"> Roots</span>
+            <span class="resource" data-resource="Sandstone"><img src="icons/Sandstone.webp" class="resource-icon"> Sandstone</span>
+            <span class="resource" data-resource="Scale"><img src="icons/Scale. webp" class="resource-icon"> Scale</span>
+            <span class="resource" data-resource="Shell"><img src="icons/Shell. webp" class="resource-icon"> Shell</span>
+            <span class="resource" data-resource="Skin"><img src="icons/Skin.webp" class="resource-icon"> Skin</span>
+            <span class="resource" data-resource="Slate"><img src="icons/Slate.webp" class="resource-icon"> Slate</span>
+            <span class="resource" data-resource="Straw"><img src="icons/Straw. webp" class="resource-icon"> Straw</span>
+            <span class="resource" data-resource="Strongwood"><img src="icons/Strongwood. webp" class="resource-icon"> Strongwood</span>
+            <span class="resource consumable" data-resource="Sugar Cane"><img src="icons/Sugar_Cane.webp" class="resource-icon"> Sugar Cane</span>
+            <span class="resource" data-resource="Tin"><img src="icons/Tin.webp" class="resource-icon"> Tin</span>
+        </div>
+    </div>
+
+    <!-- FORBIDDEN REACH -->
+    <div class="location-card">
+        <div class="location-header">
+            <h3><i class="fas fa-skull-crossbones"></i> Forbidden Reach (Powerstone)</h3>
+            <span class="badge badge-volcanic">SW Corner</span>
+        </div>
+        <div class="resources">
+            <span class="resource important" data-resource="Amethyst"><img src="icons/Gem.webp" class="resource-icon"> Amethyst ⭐</span>
+            <span class="resource important" data-resource="Emerald"><img src="icons/Emerald.webp" class="resource-icon"> Emerald ⭐</span>
+            <span class="resource important" data-resource="Crude Oil"><img src="icons/Crude_Oil.webp" class="resource-icon"> Crude Oil ⭐</span>
+            <span class="resource" data-resource="Mineral Oil"><img src="icons/Oil.webp" class="resource-icon"> Mineral Oil</span>
+            <span class="resource" data-resource="Fire Coral"><img src="icons/Fire_Coral.webp" class="resource-icon"> Fire Coral</span>
+            <span class="resource" data-resource="Agedwood"><img src="icons/Agedwood.webp" class="resource-icon"> Agedwood</span>
+            <span class="resource" data-resource="Bark"><img src="icons/Wood.webp" class="resource-icon"> Bark</span>
+            <span class="resource" data-resource="Basalt"><img src="icons/Basalt.webp" class="resource-icon"> Basalt</span>
+            <span class="resource" data-resource="Copper"><img src="icons/Copper.webp" class="resource-icon"> Copper</span>
+            <span class="resource" data-resource="Fronds"><img src="icons/Fronds.webp" class="resource-icon"> Fronds</span>
+            <span class="resource" data-resource="Granite"><img src="icons/Granite.webp" class="resource-icon"> Granite</span>
+            <span class="resource" data-resource="Iron"><img src="icons/Iron. webp" class="resource-icon"> Iron</span>
+            <span class="resource" data-resource="Jute"><img src="icons/Jute.webp" class="resource-icon"> Jute</span>
+            <span class="resource" data-resource="Lightwood"><img src="icons/Lightwood.webp" class="resource-icon"> Lightwood</span>
+            <span class="resource" data-resource="Marble"><img src="icons/Marble.webp" class="resource-icon"> Marble</span>
+            <span class="resource" data-resource="Radiolarite"><img src="icons/Radiolarite.webp" class="resource-icon"> Radiolarite</span>
+            <span class="resource" data-resource="Reeds"><img src="icons/Reeds.webp" class="resource-icon"> Reeds</span>
+            <span class="resource" data-resource="Straw"><img src="icons/Straw.webp" class="resource-icon"> Straw</span>
+            <span class="resource" data-resource="Strongwood"><img src="icons/Strongwood.webp" class="resource-icon"> Strongwood</span>
+        </div>
+    </div>
+
+    <!-- LEERY ISLAND -->
+    <div class="location-card">
+        <div class="location-header">
+            <h3><i class="fas fa-eye"></i> Leery Island (Cyclops)</h3>
+            <span class="badge badge-tropical">SE Corner</span>
+        </div>
+        <div class="resources">
+            <span class="resource important" data-resource="Silver"><img src="icons/Silver. webp" class="resource-icon"> Silver ⭐</span>
+            <span class="resource important" data-resource="Ruby"><img src="icons/Ruby. webp" class="resource-icon"> Ruby ⭐</span>
+            <span class="resource" data-resource="Bamboo"><img src="icons/Bamboo.webp" class="resource-icon"> Bamboo</span>
+            <span class="resource" data-resource="Chert"><img src="icons/Stone.webp" class="resource-icon"> Chert</span>
+            <span class="resource" data-resource="Copper"><img src="icons/Copper.webp" class="resource-icon"> Copper</span>
+            <span class="resource" data-resource="Cotton"><img src="icons/Cotton. webp" class="resource-icon"> Cotton</span>
+            <span class="resource" data-resource="Darkwood"><img src="icons/Wood.webp" class="resource-icon"> Darkwood</span>
+            <span class="resource" data-resource="Fronds"><img src="icons/Fronds.webp" class="resource-icon"> Fronds</span>
+            <span class="resource" data-resource="Granite"><img src="icons/Granite.webp" class="resource-icon"> Granite</span>
+            <span class="resource" data-resource="Ironwood"><img src="icons/Ironwood. webp" class="resource-icon"> Ironwood</span>
+            <span class="resource consumable" data-resource="Oregano"><img src="icons/Roots.webp" class="resource-icon"> Oregano</span>
+            <span class="resource" data-resource="Roots"><img src="icons/Roots.webp" class="resource-icon"> Roots</span>
+            <span class="resource" data-resource="Sap"><img src="icons/Saps.webp" class="resource-icon"> Sap</span>
+            <span class="resource" data-resource="Softwood"><img src="icons/Wood.webp" class="resource-icon"> Softwood</span>
+            <span class="resource consumable" data-resource="Syrup"><img src="icons/Honey.webp" class="resource-icon"> Syrup</span>
+            <span class="resource" data-resource="Strongwood"><img src="icons/Strongwood.webp" class="resource-icon"> Strongwood</span>
+        </div>
+    </div>
+
+    <!-- MAIDWICK ISLAND -->
+    <div class="location-card">
+        <div class="location-header">
+            <h3><i class="fas fa-igloo"></i> Maidwick Island</h3>
+            <span class="badge badge-tundra">NW Corner, Tundra</span>
+        </div>
+        <div class="resources">
+            <span class="resource important" data-resource="Iridium"><img src="icons/Iridium.webp" class="resource-icon"> Iridium ⭐</span>
+            <span class="resource important" data-resource="Amethyst"><img src="icons/Gem.webp" class="resource-icon"> Amethyst ⭐</span>
+            <span class="resource important" data-resource="Silver"><img src="icons/Silver. webp" class="resource-icon"> Silver ⭐</span>
+            <span class="resource" data-resource="Bamboo"><img src="icons/Bamboo.webp" class="resource-icon"> Bamboo</span>
+            <span class="resource" data-resource="Basalt"><img src="icons/Basalt.webp" class="resource-icon"> Basalt</span>
+            <span class="resource" data-resource="Chalcedony"><img src="icons/Chalcedony.webp" class="resource-icon"> Chalcedony</span>
+            <span class="resource" data-resource="Chert"><img src="icons/Stone.webp" class="resource-icon"> Chert</span>
+            <span class="resource" data-resource="Darkwood"><img src="icons/Wood.webp" class="resource-icon"> Darkwood</span>
+            <span class="resource" data-resource="Hemp"><img src="icons/Hemp. webp" class="resource-icon"> Hemp</span>
+            <span class="resource" data-resource="Rushes"><img src="icons/Rushes.webp" class="resource-icon"> Rushes</span>
+            <span class="resource" data-resource="Wetwood"><img src="icons/Wood.webp" class="resource-icon"> Wetwood</span>
+            <span class="resource" data-resource="Tin"><img src="icons/Tin.webp" class="resource-icon"> Tin</span>
+        </div>
+    </div>
+
+    <!-- SKULLCLAP ISLAND -->
+    <div class="location-card">
+        <div class="location-header">
+            <h3><i class="fas fa-bolt"></i> Skullclap Island (Thundercat)</h3>
+            <span class="badge badge-tundra">NE Center, Tundra</span>
+        </div>
+        <div class="resources">
+            <span class="resource important" data-resource="Crude Oil"><img src="icons/Crude_Oil.webp" class="resource-icon"> Crude Oil ⭐</span>
+            <span class="resource" data-resource="Amethyst"><img src="icons/Gem.webp" class="resource-icon"> Amethyst</span>
+            <span class="resource" data-resource="Sulfur"><img src="icons/Sulfur.webp" class="resource-icon"> Sulfur</span>
+            <span class="resource" data-resource="Tellurite"><img src="icons/Tellurite.webp" class="resource-icon"> Tellurite</span>
+            <span class="resource" data-resource="Ironwood"><img src="icons/Ironwood.webp" class="resource-icon"> Ironwood</span>
+            <span class="resource" data-resource="Wetwood"><img src="icons/Wood.webp" class="resource-icon"> Wetwood</span>
+            <span class="resource" data-resource="Agedwood"><img src="icons/Agedwood.webp" class="resource-icon"> Agedwood</span>
+            <span class="resource" data-resource="Basalt"><img src="icons/Basalt.webp" class="resource-icon"> Basalt</span>
+            <span class="resource" data-resource="Lightwood"><img src="icons/Lightwood.webp" class="resource-icon"> Lightwood</span>
+            <span class="resource" data-resource="Sandstone"><img src="icons/Sandstone.webp" class="resource-icon"> Sandstone</span>
+        </div>
+    </div>
+
+    <!-- KING'S ARENA -->
+    <div class="location-card">
+        <div class="location-header">
+            <h3><i class="fas fa-crown"></i> King's Arena (Boss Island)</h3>
+            <span class="badge badge-boss">NE Corner</span>
+        </div>
+        <div class="resources">
+            <span class="resource" data-resource="Silk"><img src="icons/Silk.webp" class="resource-icon"> Silk</span>
+            <span class="resource" data-resource="Fir"><img src="icons/Fir.webp" class="resource-icon"> Fir</span>
+            <span class="resource" data-resource="Sap"><img src="icons/Saps.webp" class="resource-icon"> Sap</span>
+            <span class="resource" data-resource="Twigs"><img src="icons/Wood.webp" class="resource-icon"> Twigs</span>
+            <span class="resource" data-resource="Hemp"><img src="icons/Hemp. webp" class="resource-icon"> Hemp</span>
+            <span class="resource" data-resource="Oak"><img src="icons/Oak. webp" class="resource-icon"> Oak</span>
+            <span class="resource consumable" data-resource="Acerolla"><img src="icons/Acerola.webp" class="resource-icon"> Acerolla</span>
+            <span class="resource consumable" data-resource="Strawberry"><img src="icons/Strawberry.webp" class="resource-icon"> Strawberry</span>
+            <span class="resource consumable" data-resource="Rice"><img src="icons/Rice. webp" class="resource-icon"> Rice</span>
+            <span class="resource consumable" data-resource="Maize"><img src="icons/Maize.webp" class="resource-icon"> Maize</span>
+            <span class="resource consumable" data-resource="Potato"><img src="icons/Potato.webp" class="resource-icon"> Potato</span>
+            <span class="resource consumable" data-resource="Wild Carrot"><img src="icons/Wild_Carrot.webp" class="resource-icon"> Wild Carrot</span>
+            <span class="resource consumable" data-resource="Thyme"><img src="icons/Roots.webp" class="resource-icon"> Thyme</span>
+        </div>
+    </div>
+
+    <!-- IRRILING HOLM -->
+    <div class="location-card">
+        <div class="location-header">
+            <h3><i class="fas fa-water"></i> Irriling Holm</h3>
+            <span class="badge badge-normal">NW Center</span>
+        </div>
+        <div class="resources">
+            <span class="resource" data-resource="Agedwood"><img src="icons/Agedwood.webp" class="resource-icon"> Agedwood</span>
+            <span class="resource" data-resource="Bark"><img src="icons/Wood. webp" class="resource-icon"> Bark</span>
+            <span class="resource" data-resource="Copper"><img src="icons/Copper.webp" class="resource-icon"> Copper</span>
+            <span class="resource" data-resource="Sulfur"><img src="icons/Sulfur.webp" class="resource-icon"> Sulfur</span>
+            <span class="resource" data-resource="Tin"><img src="icons/Tin.webp" class="resource-icon"> Tin</span>
+            <span class="resource" data-resource="Limestone"><img src="icons/Limestone.webp" class="resource-icon"> Limestone</span>
+            <span class="resource" data-resource="Marble"><img src="icons/Marble.webp" class="resource-icon"> Marble</span>
+            <span class="resource" data-resource="Slate"><img src="icons/Slate.webp" class="resource-icon"> Slate</span>
+        </div>
+    </div>
+
+    <!-- FARNQUET PENINSULA -->
+    <div class="location-card">
+        <div class="location-header">
+            <h3><i class="fas fa-flag"></i> Farnquet Peninsula</h3>
+            <span class="badge badge-normal">Center East</span>
+        </div>
+        <div class="resources">
+            <span class="resource consumable" data-resource="Honey"><img src="icons/Honey.webp" class="resource-icon"> Honey</span>
+            <span class="resource consumable" data-resource="Sugar Cane"><img src="icons/Sugar_Cane.webp" class="resource-icon"> Sugar Cane</span>
+            <span class="resource consumable" data-resource="Kala Namak"><img src="icons/Kala_Namak.webp" class="resource-icon"> Kala Namak</span>
+            <span class="resource" data-resource="Iodine"><img src="icons/Kala_Namak.webp" class="resource-icon"> Iodine</span>
+            <span class="resource" data-resource="Sulfur"><img src="icons/Sulfur.webp" class="resource-icon"> Sulfur</span>
+            <span class="resource" data-resource="Tin"><img src="icons/Tin.webp" class="resource-icon"> Tin</span>
+            <span class="resource" data-resource="Strongwood"><img src="icons/Strongwood.webp" class="resource-icon"> Strongwood</span>
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    <p>❤️ Atlas Blackwood Companion | Hecho para tu Compañía</p>
+</footer>
+
+<script src="script.js"></script>
+
+</body>
+</html>
