@@ -257,19 +257,65 @@ warehouseSearch.addEventListener('input', function() {
 });
 
 // ========================================
-// BÚSQUEDA EN MAPA
+// BÚSQUEDA EN MAPA (mejorada: filtra recursos dentro de cada isla)
 // ========================================
 
 const searchBox = document.getElementById('searchBox');
 const locationCards = document.querySelectorAll('.location-card');
 
-searchBox.addEventListener('input', function() {
-    const searchTerm = this.value.toLowerCase();
-    
+function normalizeText(s) {
+    return (s || '')
+        .toString()
+        .trim()
+        .toLowerCase();
+}
+
+function applyMapSearchFilter(termRaw) {
+    const term = normalizeText(termRaw);
+
+    // Si no hay búsqueda: restaurar todo
+    if (!term) {
+        locationCards.forEach(card => {
+            card.style.display = '';
+            card.querySelectorAll('.resource').forEach(r => r.classList.remove('hidden'));
+        });
+        return;
+    }
+
     locationCards.forEach(card => {
-        const text = card.textContent.toLowerCase();
-        card.style.display = text.includes(searchTerm) ? '' : 'none';
+        const locationNameEl = card.querySelector('.location-header h3');
+        const locationName = normalizeText(locationNameEl?.textContent);
+
+        const resources = Array.from(card.querySelectorAll('.resource'));
+        const matchingResources = resources.filter(r => {
+            const resourceName = normalizeText(r.getAttribute('data-resource') || r.textContent);
+            return resourceName.includes(term);
+        });
+
+        // Si el término coincide con el nombre de la ubicación:
+        // mostramos la tarjeta y todos sus recursos (modo "buscar isla")
+        if (locationName.includes(term)) {
+            card.style.display = '';
+            resources.forEach(r => r.classList.remove('hidden'));
+            return;
+        }
+
+        // Si hay recursos que coinciden:
+        // mostramos la tarjeta y SOLO esos recursos (modo "buscar material")
+        if (matchingResources.length > 0) {
+            card.style.display = '';
+            resources.forEach(r => r.classList.add('hidden'));
+            matchingResources.forEach(r => r.classList.remove('hidden'));
+            return;
+        }
+
+        // No coincide ni ubicación ni recurso: ocultar tarjeta
+        card.style.display = 'none';
     });
+}
+
+searchBox.addEventListener('input', function() {
+    applyMapSearchFilter(this.value);
 });
 
 // ========================================
