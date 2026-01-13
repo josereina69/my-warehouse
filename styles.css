@@ -450,6 +450,13 @@ header p {
     color: #f39c12;
 }
 
+/* "aka" */
+.aka {
+    font-size: 0.85em;
+    opacity: 0.85;
+    font-weight: 600;
+}
+
 /* Badges */
 .badge {
     padding: 6px 15px;

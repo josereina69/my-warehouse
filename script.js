@@ -1,4 +1,16 @@
 // ========================================
+// FIX: Prevent "Invalid or unexpected token" issues
+// ========================================
+
+// Polyfill CSS.escape (para navegadores que no lo soportan)
+if (typeof window.CSS === 'undefined') window.CSS = {};
+if (typeof window.CSS.escape !== 'function') {
+    window.CSS.escape = function (value) {
+        return String(value).replace(/[^a-zA-Z0-9_\u00A0-\uFFFF-]/g, '\\$&');
+    };
+}
+
+// ========================================
 // i18n (ES/EN)
 // ========================================
 
@@ -72,326 +84,215 @@ function setLang(lang) {
 
 function t(key, ...args) {
     const lang = getLang();
-    const val = i18n[lang]?.[key] ?? i18n.es[key] ?? key;
+    const val = (i18n[lang] && i18n[lang][key]) ?? i18n.es[key] ?? key;
     return typeof val === 'function' ? val(...args) : val;
 }
 
 function applyI18n() {
-    // Text nodes
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         el.textContent = t(key);
     });
 
-    // Placeholders
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.getAttribute('data-i18n-placeholder');
         el.setAttribute('placeholder', t(key));
     });
 
-    // Botones ES/EN active
     document.querySelectorAll('.lang-btn').forEach(btn => {
         const isActive = btn.getAttribute('data-lang') === getLang();
         btn.classList.toggle('active', isActive);
     });
 
-    // Re-render UI que depende de strings (mensaje empty)
     updateWarehouseUI();
 }
 
-// Bind idioma
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.addEventListener('click', () => setLang(btn.getAttribute('data-lang')));
-    });
-    applyI18n();
-});
-
 // ========================================
-// WAREHOUSE SYSTEM
+// Normalization (search)
 // ========================================
 
-let warehouse = JSON.parse(localStorage.getItem('atlasWarehouse')) || [];
-
-// Guardar warehouse en localStorage
-function saveWarehouse() {
-    localStorage.setItem('atlasWarehouse', JSON.stringify(warehouse));
-    updateWarehouseUI();
-    updateResourceColors();
-}
-
-// Actualizar UI del warehouse
-function updateWarehouseUI() {
-    const warehouseList = document.getElementById('warehouseList');
-    const warehouseCount = document.getElementById('warehouseCount');
-
-    warehouseCount.textContent = warehouse.length;
-
-    if (warehouse.length === 0) {
-        warehouseList.innerHTML = `<p class="empty-message">${t('emptyWarehouse')}</p>`;
-        return;
-    }
-
-    // Ordenar alfabéticamente
-    const sortedWarehouse = [...warehouse].sort();
-
-    warehouseList.innerHTML = sortedWarehouse.map(resource => {
-        const resourceElement = document.querySelector(`.resource[data-resource="${resource}"]`);
-        const iconSrc = resourceElement ? resourceElement.querySelector('.resource-icon').src : '';
-
-        return `
-            <div class="warehouse-item" data-resource="${resource}">
-                <div class="warehouse-item-content">
-                    ${iconSrc ? `<img src="${iconSrc}" class="resource-icon">` : ''}
-                    <span class="warehouse-item-name">${resource}</span>
-                </div>
-                <button class="remove-btn" onclick="removeFromWarehouse('${resource}')">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `;
-    }).join('');
-}
-
-// Añadir al warehouse
-function addToWarehouse(resourceName) {
-    if (!warehouse.includes(resourceName)) {
-        warehouse.push(resourceName);
-        saveWarehouse();
-        console.log(t('consoleAdded', resourceName));
-    }
-}
-
-// Quitar del warehouse
-function removeFromWarehouse(resourceName) {
-    warehouse = warehouse.filter(r => r !== resourceName);
-    saveWarehouse();
-    console.log(t('consoleRemoved', resourceName));
-}
-
-// Toggle recurso en warehouse
-function toggleWarehouse(resourceName) {
-    if (warehouse.includes(resourceName)) {
-        removeFromWarehouse(resourceName);
-    } else {
-        addToWarehouse(resourceName);
-    }
-}
-
-// Actualizar colores de recursos
-function updateResourceColors() {
-    const allResources = document.querySelectorAll('.resource[data-resource]');
-
-    allResources.forEach(resource => {
-        const resourceName = resource.getAttribute('data-resource');
-
-        // Quitar clases previas
-        resource.classList.remove('in-warehouse', 'not-in-warehouse');
-
-        // Añadir clase según estado
-        if (warehouse.includes(resourceName)) {
-            resource.classList.add('in-warehouse');
-        } else {
-            resource.classList.add('not-in-warehouse');
-        }
-    });
-}
-
-// ========================================
-// PANEL WAREHOUSE
-// ========================================
-
-const warehouseToggle = document.getElementById('warehouseToggle');
-const warehousePanel = document.getElementById('warehousePanel');
-const closeWarehouse = document.getElementById('closeWarehouse');
-const overlay = document.getElementById('overlay');
-const clearWarehouse = document.getElementById('clearWarehouse');
-const exportWarehouse = document.getElementById('exportWarehouse');
-
-warehouseToggle.addEventListener('click', () => {
-    warehousePanel.classList.add('active');
-    overlay.classList.add('active');
-});
-
-closeWarehouse.addEventListener('click', () => {
-    warehousePanel.classList.remove('active');
-    overlay.classList.remove('active');
-});
-
-overlay.addEventListener('click', () => {
-    warehousePanel.classList.remove('active');
-    overlay.classList.remove('active');
-});
-
-// Vaciar warehouse
-clearWarehouse.addEventListener('click', () => {
-    if (confirm(t('confirmClear'))) {
-        warehouse = [];
-        saveWarehouse();
-        console.log(t('consoleCleared'));
-    }
-});
-
-// Exportar warehouse
-exportWarehouse.addEventListener('click', () => {
-    const data = JSON.stringify(warehouse, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'atlas-warehouse.json';
-    a.click();
-    console.log(t('consoleExported'));
-});
-
-// Búsqueda en warehouse
-const warehouseSearch = document.getElementById('warehouseSearch');
-warehouseSearch.addEventListener('input', function () {
-    const searchTerm = this.value.toLowerCase();
-    const items = document.querySelectorAll('.warehouse-item');
-
-    items.forEach(item => {
-        const text = item.textContent.toLowerCase();
-        item.style.display = text.includes(searchTerm) ? '' : 'none';
-    });
-});
-
-// ========================================
-// NORMALIZACIÓN + ALIASES ES/EN PARA BÚSQUEDA
-// ========================================
-
-/**
- * Normaliza para búsqueda:
- * - minúsculas
- * - quita tildes/diacríticos (áéíóúüñ -> aeiouun)
- * - elimina puntuación y dobles espacios
- */
 function normalizeText(s) {
     return (s || '')
         .toString()
         .trim()
         .toLowerCase()
-        .normalize('NFD')                 // separa letra + diacrítico
-        .replace(/[\u0300-\u036f]/g, '')  // elimina diacríticos
-        .replace(/[^a-z0-9\s]/g, ' ')     // reemplaza puntuación por espacios
-        .replace(/\s+/g, ' ')             // colapsa espacios
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
         .trim();
 }
 
-/**
- * Aliases ES -> nombre canónico (tal como está en data-resource).
- * Esto NO puede ser "todos" automáticamente si no defines las traducciones,
- * pero aquí tienes una base grande que puedes ampliar.
- *
- * CLAVE: en español (sin importar tildes; se normaliza)
- * VALOR: recurso canónico (lo de data-resource)
- */
+// ========================================
+// Aliases ES -> canonical (data-resource OR location titles)
+// ========================================
+
 const resourceAliases = (() => {
     const map = {
-        // Metales y minerales
+        // Metals
         "cobre": "Copper",
         "hierro": "Iron",
         "estaño": "Tin",
-        "azufre": "Sulfur",
         "plata": "Silver",
+        "cobalto": "Cobalt",
         "iridio": "Iridium",
-        "rubí": "Ruby",
+
+        // Gems / crystals
         "rubi": "Ruby",
-        "esmeralda": "Emerald",
+        "rubí": "Ruby",
         "amatista": "Amethyst",
-        "calcedonia": "Chalcedony",
-        "granito": "Granite",
-        "marmol": "Marble",
-        "mármol": "Marble",
-        "pizarra": "Slate",
+        "esmeralda": "Emerald",
+        "diamante": "Diamond",
+        "cristal": "Crystal",
+        "cuarzo": "Quartz",
+
+        // Stone / terrain
         "piedra caliza": "Limestone",
         "caliza": "Limestone",
+        "pizarra": "Slate",
+        "granito": "Granite",
         "arenisca": "Sandstone",
         "basalto": "Basalt",
+        "obsidiana": "Obsidian",
+        "arena": "Sand",
+        "sal": "Salt",
 
-        // Gemas / nombres propios (a veces se usan igual)
-        "herkimer": "Herkimer",
-        "radiolarita": "Radiolarite",
+        // Pedernal / carbón / hielo
+        "pedernal": "Flint",
+        "silex": "Flint",
+        "sílex": "Flint",
+        "carbon": "Coal",
+        "carbón": "Coal",
+        "hielo": "Ice",
+        "lodo": "Mud",
+        "barro": "Mud",
 
-        // Maderas
-        "madera vieja": "Agedwood",
+        // Chemicals / fluids
+        "azufre": "Sulfur",
+        "nitrato": "Nitrate",
+        "petroleo": "Oil",
+        "petróleo": "Oil",
+        "aceite": "Oil",
+
+        // Woods
         "madera envejecida": "Agedwood",
-        "madera fuerte": "Strongwood",
-        "madera resistente": "Strongwood",
-        "madera ligera": "Lightwood",
-        "madera humeda": "Wetwood",
-        "madera húmeda": "Wetwood",
-        "madera mojada": "Wetwood",
-        "madera oscura": "Darkwood",
+        "madera vieja": "Agedwood",
         "madera blanda": "Softwood",
-        "ramas": "Twigs",
-
-        // Fibras / plantas
-        "yute": "Jute",
-        "algodon": "Cotton",
-        "algodón": "Cotton",
-        "caña de azucar": "Sugar Cane",
-        "cana de azucar": "Sugar Cane",
-        "paja": "Straw",
-        "junco": "Reeds",
-        "juncos": "Reeds",
-        "raices": "Roots",
-        "raíces": "Roots",
-        "frondas": "Fronds",
+        "madera fresca": "Freshwood",
+        "pino": "Pine",
+        "abeto": "Fir",
+        "cedro": "Cedar",
+        "madera de palma": "Palm Wood",
+        "palma": "Palm Wood",
+        "mangle": "Mangrove",
+        "alamo": "Poplar",
+        "álamo": "Poplar",
         "bambu": "Bamboo",
         "bambú": "Bamboo",
+        "madera oscura": "Darkwood",
+        "roble": "Oak",
+        "fresno": "Ash",
+        "madera dura": "Hardwood",
+        "hierromadera": "Ironwood",
+
+        // Thatch / fibers
+        "raices": "Roots",
+        "raíces": "Roots",
+        "juncos": "Reeds",
+        "junco": "Reeds",
+        "paja": "Straw",
+        "frondas": "Fronds",
+        "yute": "Jute",
         "cáñamo": "Hemp",
         "canamo": "Hemp",
+        "algodon": "Cotton",
+        "algodón": "Cotton",
+        "lino": "Flax",
+        "seda": "Silk",
+        "liana": "Liana",
+        "paja de bambu": "Bamboo Thatch",
+        "paja de bambú": "Bamboo Thatch",
+        "fibra de bambu": "Bamboo Fiber",
+        "fibra de bambú": "Bamboo Fiber",
 
-        // Animales (si los usas en ES)
-        "hueso": "Bone",
-        "piel": "Skin",
-        "cuero": "Leather",
-        "pelaje": "Fur",
-        "lana": "Fleece",
-        "caparazon": "Carapace",
-        "caparazón": "Carapace",
-        "escama": "Scale",
-        "concha": "Shell",
-
-        // Comida / consumibles
+        // Food / consumables
         "miel": "Honey",
-        "oregano": "Oregano",
-        "orégano": "Oregano",
-        "jarabe": "Syrup",
-        "arroz": "Rice",
+        "trigo": "Wheat",
+        "frijoles": "Beans",
+        "judias": "Beans",
+        "judías": "Beans",
         "maiz": "Maize",
         "maíz": "Maize",
-        "patata": "Potato",
-        "papa": "Potato",
-        "zanahoria": "Wild Carrot",
-        "zanahoria silvestre": "Wild Carrot",
-        "tomillo": "Thyme",
-        "fresa": "Strawberry",
+        "arroz": "Rice",
+        "arroz silvestre": "Wild Rice",
+        "verduras": "Vegetables",
+        "vegetales": "Vegetables",
+        "bayas": "Berries",
+        "cana de azucar": "Sugar Cane",
+        "caña de azucar": "Sugar Cane",
+        "te": "Tea",
+        "té": "Tea",
+        "aloe": "Aloe",
+        "chile": "Chili",
+        "aji": "Chili",
+        "ají": "Chili",
+        "bananas": "Bananas",
+        "bananos": "Bananas",
+        "banana": "Bananas",
+        "cocos": "Coconuts",
+        "coco": "Coconuts",
 
-        // Otros (si aparecen)
-        "yodo": "Iodine",
+        // Organic / animals / sea
+        "piel fuerte": "Strong Skin",
+        "piel resistente": "Strong Skin",
+        "cuero": "Leather",
+        "queratina": "Keratin",
+        "pasta organica": "Organic Paste",
+        "pasta orgánica": "Organic Paste",
+        "sangre vil": "Vile Blood",
+        "savia de cactus": "Cactus Sap",
         "algas": "Seaweed",
-        "savia": "Sap",
-        "corteza": "Bark",
-        "coral de fuego": "Fire Coral",
+        "sargazo": "Seaweed",
+        "perlas": "Pearls",
+        "perlas negras": "Black Pearls",
+        "coral": "Coral",
+        "conchas": "Shells",
+        "caparazon de tortuga": "Tortoise Shell",
+        "caparazón de tortuga": "Tortoise Shell",
+        "piel pesada": "Heavy Hide",
 
-        // Aceites
-        "petroleo crudo": "Crude Oil",
-        "petróleo crudo": "Crude Oil",
-        "aceite mineral": "Mineral Oil",
-        "crudo": "Crude Oil",
-
-        // Chert / Chert suele traducirse como sílex/pedernal (según contexto)
-        "pedernal": "Chert",
-        "silex": "Chert",
-        "sílex": "Chert",
-
-        // Lignite
-        "lignito": "Lignite",
+        // Location aliases (match your H3 text)
+        "freeport": "Blackwood Island (Freeport)",
+        "blackwood island": "Blackwood Island (Freeport)",
+        "maidwick": "Maidwick Island",
+        "maidwick island": "Maidwick Island",
+        "stafcook": "Stafcook Gully",
+        "stafcook gully": "Stafcook Gully",
+        "irriling": "Irriling Holm",
+        "irriling holm": "Irriling Holm",
+        "skullclap": "Skullclap Island",
+        "skullclap island": "Skullclap Island",
+        "kings arena": "King's Arena",
+        "king's arena": "King's Arena",
+        "boss island": "King's Arena",
+        "leery": "Leery Island",
+        "leery island": "Leery Island",
+        "farnquet": "Farnquet Peninsula",
+        "farnquet peninsula": "Farnquet Peninsula",
+        "golnora": "Golnora Refuge",
+        "golnora refuge": "Golnora Refuge",
+        "forbidden reach": "The Forbidden Reach",
+        "the forbidden reach": "The Forbidden Reach",
+        "powerstone": "The Forbidden Reach",
+        "powerstone island": "The Forbidden Reach",
+        "shrewberry": "Shrewberry Isle",
+        "shrewberry isle": "Shrewberry Isle",
+        "mermaid city": "Mermaid City",
+        "sirenas": "Mermaid City",
+        "underworld": "The Underworld",
+        "cueva": "The Underworld"
     };
 
-    // Normalizamos las claves al construir el mapa para que "Á" y "A" sean iguales
     const normalized = {};
     Object.keys(map).forEach(k => {
         normalized[normalizeText(k)] = map[k];
@@ -404,38 +305,203 @@ function getSearchVariants(termRaw) {
     if (!termNorm) return [];
 
     const variants = new Set([termNorm]);
-
-    // Si hay alias ES -> canónico EN, añadimos también el canónico como variante
     const aliasTo = resourceAliases[termNorm];
-    if (aliasTo) {
-        variants.add(normalizeText(aliasTo));
-    }
-
+    if (aliasTo) variants.add(normalizeText(aliasTo));
     return Array.from(variants);
 }
 
 // ========================================
-// BÚSQUEDA EN MAPA (filtra recursos dentro de cada isla, reconoce ES)
+// Warehouse
 // ========================================
 
-const searchBox = document.getElementById('searchBox');
-const locationCards = document.querySelectorAll('.location-card');
+let warehouse = JSON.parse(localStorage.getItem('atlasWarehouse')) || [];
+
+function saveWarehouse() {
+    localStorage.setItem('atlasWarehouse', JSON.stringify(warehouse));
+    updateWarehouseUI();
+    updateResourceColors();
+}
+
+function updateWarehouseUI() {
+    const warehouseList = document.getElementById('warehouseList');
+    const warehouseCount = document.getElementById('warehouseCount');
+    if (!warehouseList || !warehouseCount) return;
+
+    warehouseCount.textContent = warehouse.length;
+
+    if (warehouse.length === 0) {
+        warehouseList.innerHTML = `<p class="empty-message">${t('emptyWarehouse')}</p>`;
+        return;
+    }
+
+    const sortedWarehouse = [...warehouse].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+    warehouseList.innerHTML = sortedWarehouse.map(resource => {
+        const resourceElement = document.querySelector(`.resource[data-resource="${CSS.escape(resource)}"]`);
+        const iconSrc = resourceElement ? resourceElement.querySelector('.resource-icon')?.src : '';
+
+        const safeResourceJs = String(resource).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+        return `
+            <div class="warehouse-item" data-resource="${resource}">
+                <div class="warehouse-item-content">
+                    ${iconSrc ? `<img src="${iconSrc}" class="resource-icon">` : ''}
+                    <span class="warehouse-item-name">${resource}</span>
+                </div>
+                <button class="remove-btn" onclick="removeFromWarehouse('${safeResourceJs}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+function addToWarehouse(resourceName) {
+    if (!warehouse.includes(resourceName)) {
+        warehouse.push(resourceName);
+        saveWarehouse();
+        console.log(t('consoleAdded', resourceName));
+    }
+}
+
+function removeFromWarehouse(resourceName) {
+    warehouse = warehouse.filter(r => r !== resourceName);
+    saveWarehouse();
+    console.log(t('consoleRemoved', resourceName));
+}
+
+function toggleWarehouse(resourceName) {
+    if (warehouse.includes(resourceName)) removeFromWarehouse(resourceName);
+    else addToWarehouse(resourceName);
+}
+
+function updateResourceColors() {
+    document.querySelectorAll('.resource[data-resource]').forEach(resource => {
+        const resourceName = resource.getAttribute('data-resource');
+        resource.classList.remove('in-warehouse', 'not-in-warehouse');
+        resource.classList.add(warehouse.includes(resourceName) ? 'in-warehouse' : 'not-in-warehouse');
+    });
+}
+
+// ========================================
+// UI bindings (safe)
+// ========================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Language buttons
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => setLang(btn.getAttribute('data-lang')));
+    });
+
+    // Warehouse panel buttons
+    const warehouseToggle = document.getElementById('warehouseToggle');
+    const warehousePanel = document.getElementById('warehousePanel');
+    const closeWarehouse = document.getElementById('closeWarehouse');
+    const overlay = document.getElementById('overlay');
+    const clearWarehouse = document.getElementById('clearWarehouse');
+    const exportWarehouse = document.getElementById('exportWarehouse');
+    const warehouseSearch = document.getElementById('warehouseSearch');
+
+    if (warehouseToggle && warehousePanel && overlay) {
+        warehouseToggle.addEventListener('click', () => {
+            warehousePanel.classList.add('active');
+            overlay.classList.add('active');
+        });
+
+        overlay.addEventListener('click', () => {
+            warehousePanel.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+
+    if (closeWarehouse && warehousePanel && overlay) {
+        closeWarehouse.addEventListener('click', () => {
+            warehousePanel.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+    }
+
+    if (clearWarehouse) {
+        clearWarehouse.addEventListener('click', () => {
+            if (confirm(t('confirmClear'))) {
+                warehouse = [];
+                saveWarehouse();
+                console.log(t('consoleCleared'));
+            }
+        });
+    }
+
+    if (exportWarehouse) {
+        exportWarehouse.addEventListener('click', () => {
+            const data = JSON.stringify(warehouse, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'atlas-warehouse.json';
+            a.click();
+            console.log(t('consoleExported'));
+        });
+    }
+
+    if (warehouseSearch) {
+        warehouseSearch.addEventListener('input', function () {
+            const searchTerm = normalizeText(this.value);
+            document.querySelectorAll('.warehouse-item').forEach(item => {
+                const text = normalizeText(item.textContent);
+                item.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    }
+
+    // Map search
+    const searchBox = document.getElementById('searchBox');
+    if (searchBox) {
+        searchBox.addEventListener('input', function () {
+            applyMapSearchFilter(this.value);
+        });
+    }
+
+    // Delegated click for resources (works always)
+    document.addEventListener('click', (e) => {
+        const resourceEl = e.target.closest('.resource[data-resource]');
+        if (!resourceEl) return;
+        toggleWarehouse(resourceEl.getAttribute('data-resource'));
+    });
+
+    // Initial render
+    applyI18n();
+    updateWarehouseUI();
+    updateResourceColors();
+
+    // Console
+    const locationCardsCount = document.querySelectorAll('.location-card').length;
+    const resourcesCount = document.querySelectorAll('.resource[data-resource]').length;
+
+    console.log(`%c${t('consoleTitle')}`, 'color: #f39c12; font-size: 20px; font-weight: bold;');
+    console.log(t('consoleLocationsLoaded', locationCardsCount));
+    console.log(t('consoleResourcesTotal', resourcesCount));
+    console.log(t('consoleWarehouseCount', warehouse.length));
+});
+
+// ========================================
+// Map search filter
+// ========================================
 
 function applyMapSearchFilter(termRaw) {
     const variants = getSearchVariants(termRaw);
+    const cards = Array.from(document.querySelectorAll('.location-card'));
 
-    // Si no hay búsqueda: restaurar todo
     if (variants.length === 0) {
-        locationCards.forEach(card => {
+        cards.forEach(card => {
             card.style.display = '';
             card.querySelectorAll('.resource').forEach(r => r.classList.remove('hidden'));
         });
         return;
     }
 
-    locationCards.forEach(card => {
+    cards.forEach(card => {
         const locationNameEl = card.querySelector('.location-header h3');
-        const locationName = normalizeText(locationNameEl?.textContent);
+        const locationName = normalizeText(locationNameEl ? locationNameEl.textContent : '');
 
         const resources = Array.from(card.querySelectorAll('.resource'));
         const matchingResources = resources.filter(r => {
@@ -444,14 +510,12 @@ function applyMapSearchFilter(termRaw) {
             return variants.some(v => resourceAttr.includes(v) || resourceText.includes(v));
         });
 
-        // Si el término coincide con la ubicación: mostramos la tarjeta y todos los recursos
         if (variants.some(v => locationName.includes(v))) {
             card.style.display = '';
             resources.forEach(r => r.classList.remove('hidden'));
             return;
         }
 
-        // Si coincide con recursos: mostramos la tarjeta y SOLO esos recursos
         if (matchingResources.length > 0) {
             card.style.display = '';
             resources.forEach(r => r.classList.add('hidden'));
@@ -459,106 +523,14 @@ function applyMapSearchFilter(termRaw) {
             return;
         }
 
-        // No coincide: ocultar tarjeta
         card.style.display = 'none';
     });
 }
 
-searchBox.addEventListener('input', function () {
-    applyMapSearchFilter(this.value);
-});
-
 // ========================================
-// FILTROS
+// Icon check
 // ========================================
 
-const filterBtns = document.querySelectorAll('.filter-btn');
-const allResources = document.querySelectorAll('.resource');
-
-filterBtns.forEach(btn => {
-    btn.addEventListener('click', function () {
-        // Remover active de todos
-        filterBtns.forEach(b => b.classList.remove('active'));
-        // Añadir active al clickeado
-        this.classList.add('active');
-
-        const filter = this.getAttribute('data-filter');
-
-        // Mostrar/ocultar recursos
-        allResources.forEach(resource => {
-            const resourceName = resource.getAttribute('data-resource');
-
-            if (filter === 'all') {
-                resource.classList.remove('hidden');
-            } else if (filter === 'important') {
-                if (resource.classList.contains('important')) {
-                    resource.classList.remove('hidden');
-                } else {
-                    resource.classList.add('hidden');
-                }
-            } else if (filter === 'consumable') {
-                if (resource.classList.contains('consumable')) {
-                    resource.classList.remove('hidden');
-                } else {
-                    resource.classList.add('hidden');
-                }
-            } else if (filter === 'missing') {
-                if (!warehouse.includes(resourceName)) {
-                    resource.classList.remove('hidden');
-                } else {
-                    resource.classList.add('hidden');
-                }
-            } else if (filter === 'owned') {
-                if (warehouse.includes(resourceName)) {
-                    resource.classList.remove('hidden');
-                } else {
-                    resource.classList.add('hidden');
-                }
-            }
-        });
-
-        // Ocultar tarjetas sin recursos visibles
-        locationCards.forEach(card => {
-            const visibleResources = card.querySelectorAll('.resource:not(.hidden)');
-            if (visibleResources.length === 0) {
-                card.style.display = 'none';
-            } else {
-                card.style.display = '';
-            }
-        });
-    });
-});
-
-// ========================================
-// CLICK EN RECURSOS
-// ========================================
-
-allResources.forEach(resource => {
-    resource.addEventListener('click', function () {
-        const resourceName = this.getAttribute('data-resource');
-        toggleWarehouse(resourceName);
-    });
-});
-
-// ========================================
-// INICIALIZACIÓN
-// ========================================
-
-document.addEventListener('DOMContentLoaded', () => {
-    updateWarehouseUI();
-    updateResourceColors();
-});
-
-// ========================================
-// CONSOLA
-// ========================================
-
-console.log(`%c${t('consoleTitle')}`, 'color: #f39c12; font-size: 20px; font-weight: bold;');
-console.log(t('consoleLocationsLoaded', locationCards.length));
-console.log(t('consoleResourcesTotal', allResources.length));
-console.log(t('consoleWarehouseCount', warehouse.length));
-
-// Detectar iconos que no cargan
 window.addEventListener('load', function () {
     const icons = document.querySelectorAll('.resource-icon');
     const missing = [];
